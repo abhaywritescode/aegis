@@ -35,7 +35,7 @@ The overall goal of AEGIS is to **detect potential emergencies early, intelligen
 
 ### Machine Learning
 
-* **Python** — Data processing and machine learning development
+* **Python** — Data processing (pandas, numpy, matplotlib) and machine learning development
 * **Jupyter Notebook** — Model experimentation, analysis, and development
 * **Scikit-learn** — Machine learning and model implementation
 * **Logistic Regression** — Used for anomaly classification and prediction
@@ -49,7 +49,6 @@ The overall goal of AEGIS is to **detect potential emergencies early, intelligen
 ### Frontend
 
 * **React**
-* **JavaScript** — Frontend development and application logic
 
 The architecture is designed to allow sensor data to flow through the detection pipeline in real time, with the backend coordinating communication between the detection system and the user-facing application.
 
