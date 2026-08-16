@@ -2,6 +2,8 @@
 
 ![404 Not Found](logo.webp)
 
+**Dataset Used For Training:** https://www.kaggle.com/datasets/drabdulbari/smartphone-imu-road-accident-detection-dataset
+
 AEGIS is an intelligent emergency detection system designed to identify potential crashes and dangerous motion anomalies and respond to them as quickly as possible.
 
 The system uses a **layered detection approach**, progressively analyzing additional signals to validate an incident and reduce false positives.
