@@ -45,7 +45,7 @@ The overall goal of AEGIS is to **detect potential emergencies early, intelligen
 
 * **Node.js**
 * **Express.js** — Backend API and server-side application logic
-* **WebSockets** — Planned for real-time sensor and anomaly data transfer
+* **Socket.IO (WebSockets over TCP)** — Real-time sensor and anomaly data transfer, guaranteeing data sequence integrity for the machine learning time-series windows.
 
 ### Frontend
 
@@ -71,6 +71,17 @@ aegis/
 │   ├── package.json
 │   └── package-lock.json
 │
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── context/
+│   │   ├── hooks/
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   ├── package.json
+│   └── vite.config.ts
+│
 ├── notebook/
 │   ├── dataset.csv
 │   └── notebook.ipynb
@@ -94,9 +105,13 @@ aegis/
   * **`package.json` / `package-lock.json`** — Backend dependencies and project configuration.
 
 * **`notebook/`** — Contains the machine-learning experimentation and dataset used during development.
-
   * **`notebook.ipynb`** — Jupyter Notebook containing the ML experimentation and anomaly-detection work.
   * **`dataset.csv`** — Dataset used for model development and analysis.
+
+* **`frontend/`** — The React (Vite) user interface for AEGIS.
+  * **`src/components/`** — Reusable UI components (StartScreen, Register, Login, HomeScreen).
+  * **`src/context/`** — Global state management (e.g., AuthContext for JWT sessions).
+  * **`src/hooks/`** — Custom React hooks (e.g., `useSensorWebSocket.ts` for capturing device motion).
 
 * **`.gitignore`** — Specifies files and directories that should not be tracked by Git.
 
@@ -106,22 +121,30 @@ aegis/
 
 ---
 
+## Real-Time Data Pipeline
+
+AEGIS utilizes **Socket.IO (WebSockets over TCP)** for real-time, bidirectional communication between the client and the backend. TCP is strictly used over UDP to guarantee data sequence integrity, which is essential for accurate machine learning time-series window evaluations.
+
+### 10-Second Batching System
+To balance ultra-low latency for emergency SOS alerts with extreme server efficiency and device battery life, AEGIS employs a **10-second windowed batching approach**. 
+
+Instead of overloading the server with high-frequency (e.g., 50Hz) individual sensor requests, the client buffers gyroscope and accelerometer data locally and sends a single, compiled JSON array every 10 seconds. The backend seamlessly maps this batch into our Logistic Regression inference pipeline, asynchronously evaluating each data point to detect crash-level anomalies without blocking the server's event loop.
+
+### WebSocket Events
+
+* **Listening Events (Ingestion)**
+  * `sensor_batch_stream` — Ingests the 10-second JSON array containing `samples` (sensor readings), `timestamp_start`, and `timestamp_end`.
+
+* **Emitting Events (Server Responses)**
+  * `anomaly_detected` — Emitted immediately to the client if the batch contains an anomaly. The payload includes critical metadata such as the `anomaly_score`, exact `timestamp`, `trigger_features` (e.g., peak acceleration), and the `suggested_action`.
+  * `window_acknowledged` — A lightweight status emitted when a 10-second batch is processed successfully and classified as normal behavior.
+  * `batch_error` — Emitted if the server receives a corrupted array or invalid data types, gracefully handling the error without crashing.
+
+---
+
 ## Future Development
 
-AEGIS is currently in an early development stage. The **machine-learning API and authentication system are currently implemented**, while the remaining layers of the detection and emergency-response pipeline are planned for future development.
-
-### Real-Time Data Transfer
-
-* Implement **WebSocket-based communication** for continuous, real-time transfer of sensor and detection data.
-* Allow live sensor readings and anomaly events to be communicated between the detection system, backend, and frontend.
-* Enable the application to react to detected anomalies without requiring repeated API requests.
-
-### Motion Anomaly Detection
-
-* Implement the actual **motion anomaly detection pipeline** for accelerometer and gyroscope data.
-* Integrate sensor readings with the existing ML API.
-* Detect abnormal movement patterns that could indicate a crash or dangerous event.
-* Develop appropriate thresholds and model-based validation to reduce false positives.
+AEGIS is currently in an early development stage. The **machine-learning API, authentication system, and real-time WebSocket anomaly detection pipeline are currently implemented**, while the remaining layers of the detection and emergency-response pipeline are planned for future development.
 
 ### Layer 2 — Secondary Validation
 
@@ -155,24 +178,20 @@ Future development will connect the anomaly detection pipeline to the emergency-
 
 ### Frontend
 
-* Develop the planned **React-based frontend**.
-* Provide a real-time dashboard for monitoring sensor data and detected anomalies.
-* Display location, incident status, detection-layer progress, and emergency-response information.
-* Integrate the frontend with the backend through APIs and WebSockets.
+The React-based frontend has been established as a Vite Single Page Application (SPA).
+* **Live Sensor Dashboard**: A real-time interface monitoring device acceleration and rotation, built via custom hooks.
+* **Authentication & Medical Profiles**: Secure JWT-based Login/Registration flows that capture crucial emergency medical data (allergies, emergency contacts, primary doctor) into a centralized SQLite database.
+* **Future Work**: Display incident status, detection-layer progress, and emergency-response information in real-time.
 
 ### Overall Development Roadmap
 
 ```text
-Current
+Currentgit init.
   │
   ├── ML API                         ✓
   ├── Authentication System          ✓
-  │
-  ▼
-Next
-  │
-  ├── Real-time WebSocket Layer      ☐
-  ├── Motion Anomaly Detection       ☐
+  ├── Real-time WebSocket Layer      ✓
+  ├── Motion Anomaly Detection       ✓
   │
   ▼
 Layer 2
@@ -193,10 +212,10 @@ Final Integration
   ├── Multi-layer Validation         ☐
   ├── Emergency Contact System       ☐
   ├── Emergency Services Integration ☐
-  └── Real-time React Dashboard      ☐
+  └── Real-time React Dashboard      ✓
 ```
 
-AEGIS is being developed incrementally, with the current focus on establishing the **ML and backend foundation** before integrating real-time sensor streams and the remaining detection layers.
+AEGIS is being developed incrementally. The **ML, backend foundation, authentication, medical data schemas, and the real-time React dashboard** have now been established. The next major focus is refining the ML inference loop and integrating the remaining detection layers.
 
 ---
 

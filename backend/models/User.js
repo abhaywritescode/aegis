@@ -13,6 +13,25 @@ const User = sequelize.define('User', {
     password: {
         type: DataTypes.STRING,
         allowNull: false
+    },
+    age: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
+    gender: {
+        type: DataTypes.STRING,
+        validate: {
+            isIn: [['Male', 'Female', 'Others']]
+        },
+        allowNull: true
+    },
+    height: {
+        type: DataTypes.FLOAT,
+        allowNull: true
+    },
+    weight: {
+        type: DataTypes.FLOAT,
+        allowNull: true
     }
 });
 

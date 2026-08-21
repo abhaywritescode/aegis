@@ -32,3 +32,5 @@ const predictProba = (X) => {
 const predict = (X) => {
     return predictProba(X) > 0.5;
 };
+
+module.exports = { predict, predictProba, transform, sigmoid };

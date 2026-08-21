@@ -3,6 +3,8 @@
 # =========================
 
 backend/node_modules/
+frontend/node_modules/
+node_modules/
 backend/.env
 backend/.env.*
 !backend/.env.example
@@ -49,7 +51,7 @@ scaler.pkl
 *.joblib
 
 # Training outputs
-models/
+/models/
 artifacts/
 
 
