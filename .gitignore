@@ -2,23 +2,21 @@
 # Node / Express
 # =========================
 
-backend/node_modules/
-frontend/node_modules/
 node_modules/
-backend/.env
-backend/.env.*
-!backend/.env.example
+.env
+.env.*
+!.env.example
 
 
 # =========================
 # Database
 # =========================
 
-backend/database.sqlite
-backend/database.sqlite-*
-backend/*.sqlite
-backend/*.sqlite3
-backend/*.db
+database.sqlite
+database.sqlite-*
+*.sqlite
+*.sqlite3
+*.db
 
 
 # =========================
