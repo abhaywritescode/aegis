@@ -27,10 +27,6 @@ module.exports = (motionData, latitude, longitude) => {
 
     const lastSpeed = motionData[motionData.length - 1][6];
 
-
-    const latitude = location[0];
-    const longitude = location[1];
-
     if (typeof latitude !== "number" || !Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
         throw new Error("Latitude must be a valid number between -90 and 90.");
     }
