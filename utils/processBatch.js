@@ -1,12 +1,8 @@
 const { predict } = require("./logisticRegression");
 
-module.exports = (motionData, location) => {
+module.exports = (motionData, latitude, longitude) => {
     if (!Array.isArray(motionData) || motionData.length === 0) {
         throw new Error("Motion sensor data must be a valid non-empty array.");
-    }
-
-    if (!Array.isArray(locationData) || locationData.length !== 2) {
-        throw new Error("Location must be a valid non-empty array consisting of latitude [0] and longitude [1].")
     }
 
     let anomalyCount = 0;
@@ -47,7 +43,8 @@ module.exports = (motionData, location) => {
     return {
         anomalyCount,
         totalSamples: motionData.length,
-        lastLocation,
+        latitude,
+        longitude,
         lastSpeed,
         timestamp: new Date().toISOString()
     }

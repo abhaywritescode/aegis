@@ -2,6 +2,10 @@ const { parseCookie } = require("cookie");
 const jwt = require("jsonwebtoken");
 const processBatch = require("./utils/processBatch");
 const { setAnomaly, getAnomaly } = require("./utils/redisHelper");
+const calculateDistance = require("./utils/calculateDistance");
+
+const SPEED_DROP_THRESHOLD = 0.7;
+const MIN_DISTANCE_THRESHOLD = 10; // in meters
 
 const socketAuth = (socket, next) => {
     try {   
@@ -24,33 +28,47 @@ const socketAuth = (socket, next) => {
 const handleSensorBatchStream = (socket) => {
     socket.on("sensor_batch_stream", async (payload) => {
         try {
-            const prevAnomaly = await getAnomaly(socket.user.id);
-            if (prevAnomalies != null) {
-                console.log(prevAnomalies);
-                // return;
-            }
-
             if (!payload || typeof payload !== "object") {
-                return socket.emit("batch_error", { message: "Payload must be an object." });
+                return socket.emit("payload_error", { message: "Payload must be an object." });
             }
 
-            const { motionData, locationData } = payload;
+            const { motionData, latitude, longitude } = payload;
+            const result = processBatch(motionData, latitude, longitude);
 
-            const result = processBatch(motionData, locationData);
-            console.log(result);
+            const prevAnomaly = await getAnomaly(socket.user.id);
+            if (prevAnomaly) {
+                const currentSpeed = result.lastSpeed;
+                const currentLatitude = result.latitude;
+                const currentLongitude = result.longitude;
+
+                const prevSpeed = prevAnomaly.lastSpeed;
+                const prevLatitude = prevAnomaly.latitude;
+                const prevLongitude = prevAnomaly.longitude;
+
+                const speedDip = ((prevSpeed - currentSpeed) / prevSpeed);
+                const distance = calculateDistance(currentLatitude, currentLongitude, prevLatitude, prevLongitude);
+
+                if (speedDip >= SPEED_DROP_THRESHOLD && distance <= MIN_DISTANCE_THRESHOLD) {
+                    return socket.emit("crash_alert", {
+                        message: "A potential vehicle crash has been detected."
+                    });
+                }
+            }
 
             if (result.anomalyCount > 0) {
                 await setAnomaly(socket.user.id, result);
-                return socket.emit("anomaly_detected", {
-                    message: "Anomalies in motion sensor and speed readings have been detected."
+                return socket.emit("sensor_alert", {
+                    message: "Anomalies have been detected in motion sensor readings."
                 });
             } else {
-                return socket.emit("window_acknowledged", { status: "normal" });
+                return socket.emit("sensor_normal", {
+                    message: "No anomalies have been detected in motion sensor readings."
+                });
             }
         } catch (err) {
             console.error("Batch processing error:", err);
-            return socket.emit("batch_error", {
-                message: "Error processing sensor batch window."
+            return socket.emit("error", {
+                message: "An unexpected error occurred."
             });
         }
     });
