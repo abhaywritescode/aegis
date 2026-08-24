@@ -6,9 +6,16 @@ const { Server } = require("socket.io");
 const app = express();
 app.set("trust proxy", true);
 
-const port = 3000;
+const port = process.env.PORT || 3000;
+
 const server = http.createServer(app);
-const io = new Server(server);
+
+const io = new Server(server, {
+    cors: {
+        origin: process.env.FRONTEND_URL,
+        credentials: true
+    }
+});
 
 app.use(express.json());
 app.use(cookieParser());
@@ -25,5 +32,5 @@ app.use("/devices", require("./routes/devices"));
 require("./websockets")(io);
 
 server.listen(port, () => {
-    console.log(`App is listening at ${port}.`);
+    console.log(`Aegis backend listening on port ${port}`);
 });
