@@ -2,7 +2,7 @@ const express = require("express");
 const cookieParser = require("cookie-parser");
 const http = require("http");
 const { Server } = require("socket.io");
-const { createClient } = require("redis");
+// const { createClient } = require("redis");
 const { createAdapter } = require("@socket.io/redis-adapter");
 
 const app = express();
@@ -17,14 +17,14 @@ const io = new Server(server, {
     }
 });
 
-if (process.env.REDIS_URL) {
-    const pubClient = createClient({ url: process.env.REDIS_URL });
-    const subClient = pubClient.duplicate();
+// if (process.env.REDIS_URL) {
+//     const pubClient = createClient({ url: process.env.REDIS_URL });
+//     const subClient = pubClient.duplicate();
     
-    Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
-        io.adapter(createAdapter(pubClient, subClient));
-    });
-}
+//     Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
+//         io.adapter(createAdapter(pubClient, subClient));
+//     });
+// }
 
 app.use(express.json());
 app.use(cookieParser());
