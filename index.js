@@ -3,7 +3,7 @@ const cookieParser = require("cookie-parser");
 const http = require("http");
 const { Server } = require("socket.io");
 // const { createClient } = require("redis");
-const { createAdapter } = require("@socket.io/redis-adapter");
+// const { createAdapter } = require("@socket.io/redis-adapter");
 
 const app = express();
 app.set("trust proxy", true);
