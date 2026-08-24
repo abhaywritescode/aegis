@@ -1,14 +1,14 @@
 const { parseCookie } = require("cookie");
 const jwt = require("jsonwebtoken");
 const processBatch = require("./utils/processBatch");
-const { setAnomaly, getAnomaly } = require("./utils/redisHelper");
+const { setAnomaly, getAnomaly, removeAnomaly } = require("./utils/anomalyMap");
 const calculateDistance = require("./utils/calculateDistance");
 
 const SPEED_DROP_THRESHOLD = 0.7;
 const MIN_DISTANCE_THRESHOLD = 10; // in meters
 
 const socketAuth = (socket, next) => {
-    try {   
+    try {
         const cookies = parseCookie(socket.handshake.headers.cookie || "");
         const token = cookies.token;
 
@@ -26,7 +26,7 @@ const socketAuth = (socket, next) => {
 };
 
 const handleSensorBatchStream = (socket) => {
-    socket.on("sensor_batch_stream", async (payload) => {
+    socket.on("sensor_batch_stream", (payload) => {
         try {
             if (!payload || typeof payload !== "object") {
                 return socket.emit("payload_error", { message: "Payload must be an object." });
@@ -35,7 +35,7 @@ const handleSensorBatchStream = (socket) => {
             const { motionData, latitude, longitude } = payload;
             const result = processBatch(motionData, latitude, longitude);
 
-            const prevAnomaly = await getAnomaly(socket.user.id);
+            const prevAnomaly = getAnomaly(socket.user.id);
             if (prevAnomaly) {
                 const currentSpeed = result.lastSpeed;
                 const currentLatitude = result.latitude;
@@ -48,6 +48,7 @@ const handleSensorBatchStream = (socket) => {
                 const speedDip = ((prevSpeed - currentSpeed) / prevSpeed);
                 const distance = calculateDistance(currentLatitude, currentLongitude, prevLatitude, prevLongitude);
 
+                removeAnomaly(socket.user.id);
                 if (speedDip >= SPEED_DROP_THRESHOLD && distance <= MIN_DISTANCE_THRESHOLD) {
                     return socket.emit("crash_alert", {
                         message: "A potential vehicle crash has been detected."
@@ -56,7 +57,7 @@ const handleSensorBatchStream = (socket) => {
             }
 
             if (result.anomalyCount > 0) {
-                await setAnomaly(socket.user.id, result);
+                setAnomaly(socket.user.id, result);
                 return socket.emit("sensor_alert", {
                     message: "Anomalies have been detected in motion sensor readings."
                 });
